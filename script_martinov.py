@@ -65,22 +65,41 @@ def get_api(access_token):
     session = vk.Session(access_token=access_token)
     return vk.API(session)
 
+
 def main():
-    stnum = 0
-    msg = open('text.txt', 'r')
-    user_text = msg.read()
+    #
     access_token, _ = get_saved_auth_params()
     if not access_token or not _:
         access_token, _ = get_auth_params()
     api = get_api(access_token)
-    with open("currlist.txt") as file:
-        spisok = [row.strip() for row in file]
-    users = spisok
-    for user_id in users:
-        print("User ", user_id)
-        res = send_message(api, user_id=user_id, message=user_text)
-        stnum = stnum + 1
-        time.sleep(3)
-        print(stnum)
 
+    #открытие текста сообщения, read-only
+    msg = open('text.txt', 'r')
+    user_text = msg.read()
+
+    #обнуление номера строки
+    list_num = 0
+    #открытие списка получателей из файла построчно, строка -> элемент списка
+    with open("currlist.txt") as file:
+        users = [row.strip() for row in file]
+    #для каждого элемента списка
+    for user_id in users:
+        list_num = list_num + 1
+        print("User num - ", list_num, ' Link - vk.com/', user_id, sep='')
+        #обработка ошибок
+        #первоначальное действие
+        try:
+            res = send_message(api, user_id=user_id, message=user_text)
+        #если вываливается ошибка, то
+        except Exception:
+            print('Ошибка для ', list_num)
+        #если удачно, то
+        else:
+            print('Удачно!')
+        #в любом случае, в конце делать
+        finally:
+            time.sleep(3)
+
+
+### НАЧАЛО ПРОГРАММЫ ###
 main()
