@@ -8,6 +8,7 @@ import pickle
 from datetime import datetime, timedelta
 import vk
 import time
+import vk_requests
 
 # id of vk.com application
 APP_ID = 5745809
@@ -15,43 +16,9 @@ APP_ID = 5745809
 AUTH_FILE = '.auth_data'
 # chars to exclude from filename
 FORBIDDEN_CHARS = '/\\\?%*:|"<>!'
-
-def get_saved_auth_params():
-    access_token = None
-    user_id = None
-    try:
-        with open(AUTH_FILE, 'rb') as pkl_file:
-            token = pickle.load(pkl_file)
-            expires = pickle.load(pkl_file)
-            uid = pickle.load(pkl_file)
-        if datetime.now() < expires:
-            access_token = token
-            user_id = uid
-    except IOError:
-        pass
-    return access_token, user_id
-
-
-def save_auth_params(access_token, expires_in, user_id):
-    expires = datetime.now() + timedelta(seconds=int(expires_in))
-    with open(AUTH_FILE, 'wb') as output:
-        pickle.dump(access_token, output)
-        pickle.dump(expires, output)
-        pickle.dump(user_id, output)
-
-
-def get_auth_params():
-    auth_url = ("https://oauth.vk.com/authorize?client_id={app_id}"
-                "&scope=wall,messages&redirect_uri=http://oauth.vk.com/blank.html"
-                "&display=page&response_type=token".format(app_id=APP_ID))
-    webbrowser.open_new_tab(auth_url)
-    redirected_url = input("Paste here url you were redirected:\n")
-    aup = parse_qs(redirected_url)
-    aup['access_token'] = aup.pop(
-        'https://oauth.vk.com/blank.html#access_token')
-    save_auth_params(aup['access_token'][0], aup['expires_in'][0],
-                     aup['user_id'][0])
-    return aup['access_token'][0], aup['user_id'][0]
+#vk_requests
+#api = vk_requests.create_api(app_id=123, login='User', password='Password')
+#api = vk_requests.create_api(app_id=123, login='User', password='Password', phone_number='+79111234567')
 
 def send_message(api, user_id, message, **kwargs):
     data_dict = {
@@ -61,45 +28,60 @@ def send_message(api, user_id, message, **kwargs):
     data_dict.update(**kwargs)
     return api.messages.send(**data_dict)
 
-def get_api(access_token):
-    session = vk.Session(access_token=access_token)
-    return vk.API(session)
-
-
 def main():
-    #
-    access_token, _ = get_saved_auth_params()
-    if not access_token or not _:
-        access_token, _ = get_auth_params()
-    api = get_api(access_token)
-
     #открытие текста сообщения, read-only
     msg = open('text.txt', 'r')
     user_text = msg.read()
 
-    #обнуление номера строки
+    #чтение логинов-паролей ботов из файла
+    log = []
+    psw = []
+    f = open('bots.txt', 'r')
+    bots = f.readlines()
+    k=0
+    l=0
+    p=0
+    #занесение л/п в списки
+    while k <= 13:
+        log.append(bots[k])
+        k=k+1
+        psw.append(bots[k])
+        k=k+1
+
+    #рассылка#
+
+    #обнуление номера строки получателей
     list_num = 0
+    #обнуление успешных отправок
+    done=0
+    #обнуление номера бот-аккаунта
+    t=0
+    #первоначальная авторизация
+    api = vk_requests.create_api(app_id=APP_ID, login=log[t], password=psw[t][0:-1], phone_number=log[t], scope=['offline', 'messages'])
     #открытие списка получателей из файла построчно, строка -> элемент списка
     with open("currlist.txt") as file:
         users = [row.strip() for row in file]
     #для каждого элемента списка
     for user_id in users:
+        if done==2:
+            t=t+1
+            api = vk_requests.create_api(app_id=APP_ID, login=log[t], password=psw[t][0:-1], phone_number=log[t], scope=['offline', 'messages'])
+            done=0
         list_num = list_num + 1
-        print("User num - ", list_num, ' Link - vk.com/', user_id, sep='')
-        #обработка ошибок
+        print("User num - ", list_num, ' Link - vk.com/id', user_id, sep='')
+        #обработка ошибок#
         #первоначальное действие
+        #res = send_message(api, user_id=user_id, message=user_text)
         try:
             res = send_message(api, user_id=user_id, message=user_text)
         #если вываливается ошибка, то
         except Exception:
-            print('Ошибка для ', list_num)
+            print('Ошибка для ', list_num, user_id)
         #если удачно, то
         else:
             print('Удачно!')
+            done=done+1
         #в любом случае, в конце делать
         finally:
-            time.sleep(3)
-
-
-### НАЧАЛО ПРОГРАММЫ ###
+            time.sleep(1)
 main()
