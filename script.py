@@ -33,6 +33,9 @@ def main():
     msg = open('text.txt', 'r')
     user_text = msg.read()
 
+    #фейловая рассыль
+
+    fail = []
     #чтение логинов-паролей ботов из файла
     log = []
     psw = []
@@ -42,7 +45,7 @@ def main():
     l=0
     p=0
     #занесение л/п в списки
-    while k <= 13:
+    while k < 38:
         log.append(bots[k])
         k=k+1
         psw.append(bots[k])
@@ -63,7 +66,7 @@ def main():
         users = [row.strip() for row in file]
     #для каждого элемента списка
     for user_id in users:
-        if done==2:
+        if done==20:
             t=t+1
             api = vk_requests.create_api(app_id=APP_ID, login=log[t], password=psw[t][0:-1], phone_number=log[t], scope=['offline', 'messages'])
             done=0
@@ -77,11 +80,15 @@ def main():
         #если вываливается ошибка, то
         except Exception:
             print('Ошибка для ', list_num, user_id)
+            fail.append(user_id)
         #если удачно, то
         else:
             print('Удачно!')
-            done=done+1
+
         #в любом случае, в конце делать
         finally:
-            time.sleep(1)
+            time.sleep(0.75)
+            done=done+1
+    #currfail = open('currfail.txt', 'w')
+    #currfail.write(fail)
 main()
