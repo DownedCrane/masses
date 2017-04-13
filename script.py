@@ -41,15 +41,15 @@ def main():
     psw = []
     f = open('bots.txt', 'r')
     bots = f.readlines()
-    k=0
+    k=1
     l=0
     p=0
     #занесение л/п в списки
-    while k < 38:
+    while k < 60:
         log.append(bots[k])
         k=k+1
         psw.append(bots[k])
-        k=k+1
+        k=k+2
 
     #рассылка#
 
@@ -83,7 +83,7 @@ def main():
             fail.append(user_id)
         #если удачно, то
         else:
-            print('Удачно!')
+            pass
 
         #в любом случае, в конце делать
         finally:
